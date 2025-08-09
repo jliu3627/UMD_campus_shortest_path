@@ -52,3 +52,30 @@ def dijkstra(G: nx.MultiGraph, source: int, target: int):
                 heapq.heappush(heap, (new_dist, neighbor, path + [neighbor]))
     
     return None
+
+# astar
+def astar(G: nx.MultiGraph, source: int, target: int):
+    # (f_score, g_score, current_node, path)
+    heap = [(haversine_distance(G, source, target), 0, source, [source])]
+    visited = set()
+    g_scores = {source: 0}
+
+    while heap:
+        f, g, current, path = heapq.heappop(heap)
+
+        if current in visited:
+            continue
+        visited.add(current)
+
+        if current == target:
+            return path
+
+        for neighbor in G.neighbors(current):
+            edge_weight = G.edges[current, neighbor, 0].get('length', 1)
+            tentative_g = g + edge_weight
+            if tentative_g < g_scores.get(neighbor, float("inf")):
+                g_scores[neighbor] = tentative_g
+                f_score = tentative_g + haversine_distance(G, neighbor, target)
+                heapq.heappush(heap, (f_score, tentative_g, neighbor, path + [neighbor]))
+
+    return None

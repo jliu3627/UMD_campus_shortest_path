@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import random
 import osmnx as ox
 import networkx as nx
-from algorithms import greedy, dijkstra
+from algorithms import greedy, dijkstra, astar
 
 if __name__ == "__main__":
     # college park map
@@ -18,11 +19,18 @@ if __name__ == "__main__":
 
     path_dijkstra = dijkstra(G, source, target)
     path_greedy = greedy(G, source, target)
+    path_astar = astar(G, source, target)
 
-    fig, ax = ox.plot_graph_routes(G, [path_dijkstra, path_greedy],
-                                route_colors=["green", "red"],
+    fig, ax = ox.plot_graph_routes(G, [path_dijkstra, path_greedy, path_astar],
+                                route_colors=["green", "red", "blue"],
                                 route_linewidth=3, node_size=0,
                                 bgcolor="white", show=False)
 
-    ax.legend(["Dijkstra", "Greedy Best-First"], loc="lower left")
+    legend_handles = [
+        mpatches.Patch(color="green", label="Dijkstra"),
+        mpatches.Patch(color="red", label="Greedy Best-First"),
+        mpatches.Patch(color="blue", label="A-Star")
+    ]
+
+    ax.legend(handles=legend_handles, loc="lower left")
     fig.savefig("paths_plot.png", dpi=300)
