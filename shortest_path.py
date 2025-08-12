@@ -4,33 +4,37 @@ import random
 import osmnx as ox
 import networkx as nx
 from algorithms import greedy, dijkstra, astar
+import folium
+from fastapi import FastAPI, Query
+from fastapi.responses import HTMLResponse
 
-if __name__ == "__main__":
-    # college park map
-    G = ox.graph_from_place("College Park, Maryland, USA", network_type="walk", simplify=True)
-    G = G.to_undirected()
+# app
+app = FastAPI()
 
-    # select two random nodes
-    nodes = list(G.nodes)
-    source = random.choice(nodes)
-    target = random.choice(nodes)
-    print(f"Source node: {source}")
-    print(f"Target node: {target}")
+# college park map
+G = ox.graph_from_place("College Park, Maryland, USA", network_type="walk", simplify=True)
+G = G.to_undirected()
 
+@app.get("/", response_class=HTMLResponse)
+async def get_map():
+    with open("index.html") as f:
+        return HTMLResponse(f.read())
+    
+@app.get("/route")
+async def get_route(start_lat: float, start_lon: float, end_lat: float, end_lon: float):
+    source = ox.distance.nearest_nodes(G, start_lon, start_lat)
+    target = ox.distance.nearest_nodes(G, end_lon, end_lat)
+
+    # calculate shortest paths
     path_dijkstra = dijkstra(G, source, target)
     path_greedy = greedy(G, source, target)
     path_astar = astar(G, source, target)
 
-    fig, ax = ox.plot_graph_routes(G, [path_dijkstra, path_greedy, path_astar],
-                                route_colors=["green", "red", "blue"],
-                                route_linewidth=3, node_size=0,
-                                bgcolor="white", show=False)
+    def path_to_coords(path):
+        return [(G.nodes[n]["y"], G.nodes[n]["x"]) for n in path]
 
-    legend_handles = [
-        mpatches.Patch(color="green", label="Dijkstra"),
-        mpatches.Patch(color="red", label="Greedy Best-First"),
-        mpatches.Patch(color="blue", label="A-Star")
-    ]
-
-    ax.legend(handles=legend_handles, loc="lower left")
-    fig.savefig("paths_plot.png", dpi=300)
+    return {
+        "dijkstra": path_to_coords(path_dijkstra),
+        "greedy": path_to_coords(path_greedy),
+        "astar": path_to_coords(path_astar)
+    }

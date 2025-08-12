@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Interactive Shortest Path</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; width: 100%; }
+    .legend { background: white; padding: 6px; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  // === configuration ===
+  const ROUTE_ENDPOINT = '/route'; // <-- change to '/shortest_path' if your backend uses that
+  const MAP_CENTER = [38.9869, -76.9426]; // UMD Campus
+  const ZOOM_START = 15;
+
+  // === init map ===
+  const map = L.map('map').setView(MAP_CENTER, ZOOM_START);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // state
+  let startMarker = null;
+  let endMarker = null;
+  let currentPaths = []; // array of polylines to remove later
+  let clickCount = 0;
+
+  // helper to clear previous path layers
+  function clearPaths() {
+    if (currentPaths && currentPaths.length) {
+      currentPaths.forEach(layer => {
+        try { map.removeLayer(layer); } catch(e) { console.warn('remove layer failed', e); }
+      });
+      currentPaths = [];
+    }
+  }
+
+  // helper to draw multiple algorithm paths
+  function drawPaths(pathsObj) {
+    clearPaths();
+
+    const colors = { dijkstra: 'green', greedy: 'red', astar: 'blue' };
+    const labels = { dijkstra: 'Dijkstra', greedy: 'Greedy', astar: 'A*' };
+    const bounds = [];
+
+    ['dijkstra', 'greedy', 'astar'].forEach(key => {
+      const coords = pathsObj[key];
+      if (!coords || !Array.isArray(coords) || coords.length === 0) {
+        console.warn(`${key} path missing or empty`);
+        return;
+      }
+      // Leaflet expects [ [lat, lon], ... ]
+      const poly = L.polyline(coords, { color: colors[key], weight: 5, opacity: 0.8, title: labels[key] })
+        .addTo(map)
+        .bindTooltip(labels[key], {permanent: false, direction: 'center'});
+      currentPaths.push(poly);
+
+      // collect bounds
+      coords.forEach(c => bounds.push(c));
+    });
+
+    if (bounds.length) {
+      const latlngs = bounds.map(c => L.latLng(c[0], c[1]));
+      const group = L.featureGroup(currentPaths);
+      map.fitBounds(group.getBounds(), { padding: [30, 30] });
+    }
+  }
+
+  // click handler: first click => start, second => end and fetch routes
+  map.on('click', function(e) {
+    if (clickCount === 0) {
+      // set start marker (replace if exists)
+      if (startMarker) map.removeLayer(startMarker);
+      startMarker = L.marker(e.latlng, { draggable: true }).addTo(map).bindPopup('Start').openPopup();
+
+      // optionally clear old paths when a new start is chosen
+      clearPaths();
+      clickCount = 1;
+      console.log('Start set:', e.latlng);
+    } else {
+      // set end marker
+      if (endMarker) map.removeLayer(endMarker);
+      endMarker = L.marker(e.latlng, { draggable: true }).addTo(map).bindPopup('End').openPopup();
+
+      const start = startMarker.getLatLng();
+      const end = endMarker.getLatLng();
+      console.log('End set:', end);
+
+      // call backend
+      const url = `${ROUTE_ENDPOINT}?start_lat=${start.lat}&start_lon=${start.lng}&end_lat=${end.lat}&end_lon=${end.lng}`;
+      console.log('Requesting', url);
+      fetch(url)
+        .then(resp => {
+          if (!resp.ok) throw new Error('Server returned ' + resp.status);
+          return resp.json();
+        })
+        .then(data => {
+          console.log('Server response', data);
+          // Expecting data.dijkstra, data.greedy, data.astar each = [[lat, lon], ...]
+          drawPaths(data);
+        })
+        .catch(err => {
+          console.error('Error fetching route:', err);
+          alert('Error fetching route: ' + err.message);
+        });
+
+      // reset for new selection
+      clickCount = 0;
+    }
+  });
+
+  // small legend
+  const legend = L.control({position: 'bottomleft'});
+  legend.onAdd = function(map) {
+    const div = L.DomUtil.create('div', 'legend');
+    div.innerHTML = '<b>Algorithms</b><br><span style="color:green">■</span> Dijkstra &nbsp; <span style="color:red">■</span> Greedy &nbsp; <span style="color:blue">■</span> A*';
+    return div;
+  };
+  legend.addTo(map);
+</script>
+</body>
+</html>

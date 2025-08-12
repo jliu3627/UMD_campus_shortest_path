@@ -2,3 +2,7 @@ osmnx
 matplotlib
 geopy
 networkx
+folium
+fastapi
+uvicorn
+scikit-learn
