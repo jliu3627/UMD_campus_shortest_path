@@ -45,11 +45,24 @@
   function drawPaths(pathsObj) {
     clearPaths();
 
-    const colors = { dijkstra: 'green', greedy: 'red', astar: 'blue' };
-    const labels = { dijkstra: 'Dijkstra', greedy: 'Greedy', astar: 'A*' };
+    const colors = {
+        dijkstra: 'green',
+        greedy: 'red',
+        astar: 'blue',
+        bidirectional_dijkstra: 'orange',
+        k_shortest_path: 'purple' // can be an array of colors if you want multiple k paths
+    };
+
+    const labels = {
+        dijkstra: 'Dijkstra',
+        greedy: 'Greedy',
+        astar: 'A*',
+        bidirectional_dijkstra: 'Bidirectional Dijkstra',
+        k_shortest_path: 'K-Shortest Paths'
+    };
     const bounds = [];
 
-    ['dijkstra', 'greedy', 'astar'].forEach(key => {
+    ['dijkstra', 'greedy', 'astar', 'bidirectional_dijkstra', 'k_shortest_path'].forEach(key => {
       const coords = pathsObj[key];
       if (!coords || !Array.isArray(coords) || coords.length === 0) {
         console.warn(`${key} path missing or empty`);
@@ -118,9 +131,14 @@
   // small legend
   const legend = L.control({position: 'bottomleft'});
   legend.onAdd = function(map) {
-    const div = L.DomUtil.create('div', 'legend');
-    div.innerHTML = '<b>Algorithms</b><br><span style="color:green">■</span> Dijkstra &nbsp; <span style="color:red">■</span> Greedy &nbsp; <span style="color:blue">■</span> A*';
-    return div;
+      const div = L.DomUtil.create('div', 'legend');
+      div.innerHTML = `<b>Algorithms</b><br>
+          <span style="color:green">■</span> Dijkstra &nbsp;
+          <span style="color:red">■</span> Greedy &nbsp;
+          <span style="color:blue">■</span> A* <br>
+          <span style="color:orange">■</span> Bidirectional Dijkstra &nbsp;
+          <span style="color:purple">■</span> K-Shortest Paths`;
+      return div;
   };
   legend.addTo(map);
 </script>
