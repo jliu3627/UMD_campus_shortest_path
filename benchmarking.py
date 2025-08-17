@@ -9,7 +9,7 @@ from geopy.distance import geodesic
 from algorithms import reconstruct_path
 import osmnx as ox
 
-# Algorithms (copied and modified from algorithms.py for benchmarking with metrics)
+# Algorithms that are copied and modified from algorithms.py for benchmarking with metrics
 def haversine_distance(G: nx.MultiGraph, node1: int, node2: int):
     coord1 = (G.nodes[node1]['y'], G.nodes[node1]['x'])
     coord2 = (G.nodes[node2]['y'], G.nodes[node2]['x'])
@@ -196,7 +196,7 @@ def path_length(G: nx.MultiGraph, path):
 def measure(run_fn, *args, **kwargs):
     tracemalloc.start()
     start_time = time.perf_counter()
-    # The benchmark should return: (path, expanded, peak_frontier)
+    # The benchmark returns (path, expanded, peak_frontier)
     path, expanded, frontier = run_fn(*args, **kwargs)
     time_ms = (time.perf_counter() - start_time) * 1000.0
     mem_current, mem_peak = tracemalloc.get_traced_memory()
@@ -282,13 +282,13 @@ def path_total_length(G, path):
         length += G.edges[path[i], path[i + 1], 0].get("length", 1)
     return length
 
-def avg(vals):
+def average(vals):
     vals = [v for v in vals if v is not None]
     if not vals:
         return 0.0
     return sum(vals) / len(vals)
 
-def profile_map(G, label, pairs, trials, k_val=3):
+def mapping(G, label, pairs, trials, k_val=3):
     # Benchmarking various algorithms on the graph G and print results
     #Algorithms to benchmark
     algos = {
@@ -357,11 +357,11 @@ def profile_map(G, label, pairs, trials, k_val=3):
     total_samples = float(len(final_pairs) * trials)
 
     for name in order:
-        time_result    = round(avg(stats[name]["time"]), 2)
-        memory         = round(avg(stats[name]["memory"]), 1)
-        expanded_nodes = round(avg(stats[name]["expanded"]), 1)
-        frontier       = round(avg(stats[name]["frontier"]), 1)
-        accuracy       = round(avg(stats[name]["accuracy"]), 3)
+        time_result    = round(average(stats[name]["time"]), 2)
+        memory         = round(average(stats[name]["memory"]), 1)
+        expanded_nodes = round(average(stats[name]["expanded"]), 1)
+        frontier       = round(average(stats[name]["frontier"]), 1)
+        accuracy       = round(average(stats[name]["accuracy"]), 3)
         success        = round(100.0 * stats[name]["success"] / total_samples, 1) if total_samples else 0.0
 
         print(f"\n{name}")
@@ -388,8 +388,8 @@ def main():
         G_campus = make_grid(40)
         G_city = make_grid(120)
 
-    profile_map(largest_cc(G_campus), f"Campus: {campus}", pairs, trials, k_val=k)
-    profile_map(largest_cc(G_city),   f"Small city: {city}", pairs, trials, k_val=k)
+    mapping(largest_cc(G_campus), f"Campus: {campus}", pairs, trials, k_val=k)
+    mapping(largest_cc(G_city),   f"Small city: {city}", pairs, trials, k_val=k)
 
 if __name__ == "__main__":
     main()
