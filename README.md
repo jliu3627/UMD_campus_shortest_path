@@ -5,7 +5,7 @@ The project implements and compares multiple shortest-path algorithms on real pe
 
 ---
 
-## ✨ Features
+## Features
 - **Algorithms Implemented**
   - Dijkstra
   - A* Search
@@ -21,7 +21,7 @@ The project implements and compares multiple shortest-path algorithms on real pe
 
 ---
 
-## 🛠️ Installation
+## Installation
 
 Clone the repository and set up the environment:
 
@@ -29,3 +29,35 @@ Clone the repository and set up the environment:
 git clone https://github.com/jliu3627/UMD_campus_shortest_path.git
 cd UMD_campus_shortest_path
 bash setup.sh
+
+## Running the App
+
+Start the FastAPI backend server:
+uvicorn shortest_path:app --reload
+Then open the interactive map in your browser:
+
+http://127.0.0.1:8000/index.html
+
+
+## Requirements
+
+Python 3.8+
+
+Dependencies listed in requirements.txt:
+
+osmnx
+
+matplotlib
+
+geopy
+
+networkx
+
+folium
+
+fastapi
+
+uvicorn
+
+scikit-learn
+
